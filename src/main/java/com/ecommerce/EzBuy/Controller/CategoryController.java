@@ -18,7 +18,7 @@ public class CategoryController {
         this.categoryService = categoryService;
     }
 
-    //@GetMapping("/api/public/categories")
+    //@GetMapping("/api/public/categories") //both RequestMapping and GetMapping can be used
     @RequestMapping(value = "/api/public/categories", method = RequestMethod.GET)
     public ResponseEntity<List<Category>> getAllCategories() {
         List<Category> allCategories = categoryService.getAllCategories();
@@ -40,7 +40,7 @@ public class CategoryController {
         }
     }
 
-    @PutMapping("/api/public/categories/{categoryId}")
+    @PutMapping("/api/admin/categories/{categoryId}")
     public ResponseEntity<String> updateCategory(@RequestBody Category category, @PathVariable Long categoryId) {
         try {
             Category savedCategory = categoryService.updateCategory(category, categoryId);
