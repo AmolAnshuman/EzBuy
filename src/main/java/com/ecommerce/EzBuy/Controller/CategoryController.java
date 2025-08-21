@@ -1,5 +1,6 @@
 package com.ecommerce.EzBuy.Controller;
 
+import com.ecommerce.EzBuy.config.AppConstants;
 import com.ecommerce.EzBuy.model.Category;
 import com.ecommerce.EzBuy.payload.CategoryDTO;
 import com.ecommerce.EzBuy.payload.CategoryResponse;
@@ -23,8 +24,11 @@ public class CategoryController {
 
     //@GetMapping("/api/public/categories") //both RequestMapping and GetMapping can be used
     @RequestMapping(value = "/api/public/categories", method = RequestMethod.GET)
-    public ResponseEntity<CategoryResponse> getAllCategories() {
-        CategoryResponse categoryResponse  = categoryService.getAllCategories();
+    public ResponseEntity<CategoryResponse> getAllCategories(@RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
+                                                             @RequestParam(name = "pageSize", defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
+                                                             @RequestParam(name = "sortBy", defaultValue = AppConstants.SORT_CATEGORIES_BY, required = false) String sortBy,
+                                                             @RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_DIR, required = false) String sortOrder) {
+        CategoryResponse categoryResponse  = categoryService.getAllCategories(pageNumber, pageSize, sortBy, sortOrder);
         return new ResponseEntity<>(categoryResponse,HttpStatus.OK);
     }
 
