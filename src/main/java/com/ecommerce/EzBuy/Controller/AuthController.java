@@ -1,0 +1,125 @@
+package com.ecommerce.EzBuy.Controller;
+
+import com.ecommerce.EzBuy.model.AppRole;
+import com.ecommerce.EzBuy.model.Role;
+import com.ecommerce.EzBuy.model.User;
+import com.ecommerce.EzBuy.repositories.RoleRepository;
+import com.ecommerce.EzBuy.repositories.UserRepository;
+import com.ecommerce.EzBuy.security.jwt.JwtUtils;
+import com.ecommerce.EzBuy.security.request.LoginRequest;
+import com.ecommerce.EzBuy.security.request.SignupRequest.SignUpRequest;
+import com.ecommerce.EzBuy.security.response.MessageResponse.MessageResponse;
+import com.ecommerce.EzBuy.security.response.UserInfoResponse;
+import com.ecommerce.EzBuy.security.services.UserDetailsImpl;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/auth")
+public class AuthController {
+
+    @Autowired
+    private JwtUtils jwtUtils;
+
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    UserRepository userRepository;
+
+    @Autowired
+    PasswordEncoder encoder;
+
+    @Autowired
+    RoleRepository roleRepository;
+
+    @PostMapping("/signin")
+    public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
+        Authentication authentication;
+        try {
+            authentication = authenticationManager
+                    .authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+        } catch (AuthenticationException exception) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("message", "Bad credentials");
+            map.put("status", false);
+            return new ResponseEntity<Object>(map, HttpStatus.NOT_FOUND);
+        }
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        UserDetailsImpl userDetails = (UserDetailsImpl)authentication.getPrincipal();
+
+        String jwtToken = jwtUtils.generateTokenFromUsername(String.valueOf(userDetails)); //still working on it
+
+        List<String> roles = userDetails.getAuthorities().stream()
+                .map(item -> item.getAuthority())
+                .collect(Collectors.toList());
+
+        UserInfoResponse response = new UserInfoResponse(userDetails.getId(),
+                userDetails.getUsername(), roles, jwtToken);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/signup")
+    public ResponseEntity<?> registerUser(@Valid @RequestBody SignUpRequest signUpRequest){
+        if(userRepository.existsByUserName(signUpRequest.getUsername())){
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: Username already taken"));
+        }
+        if(userRepository.existsByEmail(signUpRequest.getEmail())){
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: Email already in use"));
+        }
+        User user = new User(
+                signUpRequest.getUsername(),
+                encoder.encode(signUpRequest.getPassword()),
+                signUpRequest.getEmail());
+        Set<String> strRoles = signUpRequest.getRole();
+        Set<Role> roles = new HashSet<>();
+        if(strRoles == null || strRoles.isEmpty()){
+            Role userRole = roleRepository.findByRoleName(AppRole.ROLE_USER)
+                    .orElseThrow(()-> new RuntimeException("Error: Role not found"));
+            roles.add(userRole);
+        }else {
+            strRoles.forEach(role -> {
+                switch (role) {
+                    case "admin":
+                        Role adminRole = roleRepository.findByRoleName(AppRole.ROLE_ADMIN)
+                                .orElseThrow(()-> new RuntimeException("Error: Role not found"));
+                        roles.add(adminRole);
+                        break;
+                    case "seller":
+                        Role sellerRole = roleRepository.findByRoleName(AppRole.ROLE_SELLER)
+                                .orElseThrow(()-> new RuntimeException("Error: Role not found"));
+                        roles.add(sellerRole);
+                        break;
+                    default:
+                        Role userRole = roleRepository.findByRoleName(AppRole.ROLE_USER)
+                                .orElseThrow(()-> new RuntimeException("Error: Role not found"));
+                        roles.add(userRole);
+                        break;
+                }
+            });
+        }
+        user.setRoles(roles);
+        userRepository.save(user);
+        return ResponseEntity.ok(new MessageResponse("User registered successfully"));
+    }
+
+}
