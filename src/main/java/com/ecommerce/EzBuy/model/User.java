@@ -26,22 +26,22 @@ public class User {
     private Long userId;
 
     @NotBlank
-    @Size(min = 3, max = 20)
+    @Size(max = 20)
     @Column(name = "username")
     private String userName;
 
     @NotBlank
-    @Size(min = 6, max = 50)
+    @Size(max = 120)
     @Column(name = "password")
     private String password;
 
     @NotBlank
-    @Size(min = 3, max = 50)
+    @Size(max = 50)
     @Column(name = "email")
     @Email
     private String email;
 
-    public User(String username, String password, String email) {
+    public User(String username,String password, String email) {
         this.userName = username;
         this.password = password;
         this.email = email;
