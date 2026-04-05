@@ -1,6 +1,5 @@
 package com.ecommerce.EzBuy.payload;
 
-import jakarta.persistence.Entity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CartItemsDTO {
+public class CartItemDTO {
     private Long cartItemId;
     private CartDTO cart;
     private ProductDTO product;
