@@ -10,6 +10,7 @@ import com.ecommerce.EzBuy.payload.ProductDTO;
 import com.ecommerce.EzBuy.repositories.CartItemRepository;
 import com.ecommerce.EzBuy.repositories.CartRepository;
 import com.ecommerce.EzBuy.repositories.ProductRepository;
+import com.ecommerce.EzBuy.util.AuthUtil;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,7 @@ public class CartServiceImpl implements CartService{
     CartItemRepository cartItemRepository;
 
     @Autowired
-    AuthUtil authUtil;
+    private AuthUtil authUtil;
 
     @Autowired
     private ProductRepository productRepository;
